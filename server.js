@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const nodemailer = require("nodemailer");
+const cors = require("cors");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -9,6 +10,14 @@ const PORT = process.env.PORT || 3000;
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(express.static("public"));
+
+
+
+app.use(cors({
+  origin: ["http://localhost:5173", "https://rehobothdigitechsolution.com/"],
+}));
+
+app.use(express.json());
 
 // Mail function (OUTSIDE route)
 async function sendMail({ name, email, message }) {
