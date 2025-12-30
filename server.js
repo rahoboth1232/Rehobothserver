@@ -1,9 +1,9 @@
 require("dotenv").config();
-const express = require("express");
-const cors = require("cors");
 const { Resend } = require("resend");
-
 const resend = new Resend(process.env.RESEND_API_KEY);
+const express = require("express");
+const nodemailer = require("nodemailer");
+const cors = require("cors");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,20 +13,31 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(express.static("public"));
 
+
+
 app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "https://rehobothdigitechsolution.com"
-  ],
+  origin: ["http://localhost:5173", "https://rehobothdigitechsolution.com/"],
 }));
 
-// Mail function
-async function sendMail({ name, email, message }) {
-  console.log("Sending email via Resend...");
+app.use(express.json());
 
-  await resend.emails.send({
-    from: "Contact <onboarding@resend.dev>",
-    to: [process.env.EMAIL_USER],
+// Mail function (OUTSIDE route)
+async function sendMail({ name, email, message }) {
+  console.log("Sending email...");
+
+  const transporter = nodemailer.createTransport({
+    service: "gmail", // ✅ correct
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+
+  
+
+  await transporter.sendMail({
+    from: `"Website Contact" <${process.env.EMAIL_USER}>`,
+    to: process.env.EMAIL_USER,
     replyTo: email,
     subject: "New Contact Form Message",
     text: `Name: ${name}\nEmail: ${email}\n\n${message}`,
@@ -44,7 +55,7 @@ app.post("/contact", async (req, res) => {
   }
 
   try {
-    await sendMail({ name, email, message });
+    await sendMail({ name, email, message }); // ✅ ACTUALLY SEND EMAIL
     res.status(200).json({ success: "Message sent successfully!" });
   } catch (err) {
     console.error("Email failed:", err);
@@ -53,5 +64,5 @@ app.post("/contact", async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });
